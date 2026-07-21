@@ -1,4 +1,4 @@
-from pydantic import BaseModel, EmailStr, AnyUrl, Field, field_validator
+from pydantic import BaseModel, EmailStr, AnyUrl, Field, field_validator , model_validator , computed_field
 from typing import Annotated, Dict, List, Optional
 
 class Patient(BaseModel):
@@ -10,6 +10,8 @@ class Patient(BaseModel):
     email: EmailStr
     linkedin_url: AnyUrl
     pass_percentage: int = Field(gt=33)
+    contacts: int 
+    lowestscore: int
 
     @field_validator('email')
     @classmethod
@@ -28,7 +30,16 @@ class Patient(BaseModel):
         else:
             raise ValueError('roll no is incorrect')
         
-
+    @model_validator(mode='after')
+    def evaluator(self):
+        if self.rollno < 100 and self.contacts > 0:
+            return self
+        raise ValueError('Not an ideal model')
+        
+    @computed_field
+    @property
+    def averages(self) -> float:
+        return round(self.marks / (self.lowestscore ** 2), 2)
 
 def insert_patient(patient: Patient):
     print(patient.name)
@@ -39,17 +50,21 @@ def insert_patient(patient: Patient):
     print(patient.email)
     print(patient.linkedin_url)
     print(patient.pass_percentage)
+    print(patient.averages)
 
 
 patient1 = {
     'name': 'shlok',
     'rollno': '13',
     'marks': 44,
+    'lowestscore':10, 
     'files': ['Maths', 'Chem', 'Phy'],
     'subject': {'maths': 44},
     'email': 'shlok@pnb.com',
     'linkedin_url': 'https://linkedin.com',
     'pass_percentage': 62,
+    'contacts':55,
+
 }
 
 patient2 = Patient(**patient1)
